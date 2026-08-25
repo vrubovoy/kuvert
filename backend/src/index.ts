@@ -18,6 +18,7 @@ import { exportRouter, exportsRouter } from './features/export/router.js'
 import { requireAuth, requireAdmin } from './middleware/auth.js'
 import { openApiDocument } from './openapi.js'
 import { startNotificationOutbox } from './notifications/outbox.js'
+import { deletionsRouter } from './features/deletions/router.js'
 
 // Resolved relative to this file so it works both in dev (src/index.ts,
 // migrations at src/db/migrations) and in the compiled build
@@ -59,6 +60,7 @@ app.route('/debts', debtsRouter)
 app.route('/users', usersRouter)
 app.route('/export', exportRouter)
 app.route('/exports', exportsRouter)
+app.route('/internal/v1', deletionsRouter)
 
 const PORT = Number(process.env['PORT'] ?? 3001)
 const server = serve({ fetch: app.fetch, port: PORT }, () => {

@@ -4,6 +4,10 @@ Brief log of notable changes, grouped by theme — not a full commit history
 (see `git log` for that). New entries get appended under the section they
 fit best; add a new section if none fits.
 
+## Account lifecycle
+- Added the durable Schlussel account-deletion consumer, permanent
+  reprovisioning tombstones, and atomic purge of all Kuvert-owned data.
+
 ## Auth
 - Fixed logout not navigating away immediately.
 - Migrated from a local login page to the centralized schlussel auth flow.
