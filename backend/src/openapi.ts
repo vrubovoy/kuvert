@@ -29,6 +29,10 @@ registry.registerComponent('securitySchemes', 'exportDelegationAuth', {
   bearerFormat: 'JWT',
   description: 'Schlüssel export delegation with token_use=export, the exact data:export scope, and hof-service:kuvert audience.',
 })
+registry.registerComponent('securitySchemes', 'deletionAuth', {
+  type: 'http', scheme: 'bearer', bearerFormat: 'JWT',
+  description: 'Short-lived Schlüssel deletion token with exact hof-deletion:kuvert audience and account:delete scope.',
+})
 
 const BEARER = [{ bearerAuth: [] }]
 const EXPORT_AUTH: Array<Record<string, string[]>> = [
@@ -95,6 +99,16 @@ function crud(basePath: string, tag: string, createSchema: z.ZodObject, updateSc
 
 // ── Accounts ─────────────────────────────────────────────────────────────
 crud('/accounts', 'accounts', accountSchema, accountUpdateSchema)
+registry.registerPath({
+  method: 'post', path: '/internal/v1/account-deletions', tags: ['internal'],
+  summary: 'Idempotently purge a deleted account', security: [{ deletionAuth: [] }],
+  request: { body: { content: { 'application/json': { schema: z.object({ jobId: z.string(), userId: z.string() }).strict() } } } },
+  responses: {
+    200: jsonResponse('Deletion completed or exact replay accepted', z.object({ status: z.enum(['completed', 'duplicate']), jobId: z.string() })),
+    401: jsonResponse('Missing, invalid, expired, or incorrectly scoped token', errorSchema),
+    409: jsonResponse('Token, payload, job, or subject identity conflict', errorSchema),
+  },
+})
 registry.registerPath({
   method: 'post', path: '/accounts/{id}/restore', tags: ['accounts'], summary: 'Unarchive an account',
   security: BEARER, request: { params: idParam }, responses: { 200: { description: 'OK' } },

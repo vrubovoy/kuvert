@@ -167,7 +167,9 @@ describe('openApiDocument', () => {
         if (!operation) continue
         expect(operation.security).toEqual(path === '/exports/me'
           ? [{ bearerAuth: [] }, { exportDelegationAuth: [] }]
-          : [{ bearerAuth: [] }])
+          : path === '/internal/v1/account-deletions'
+            ? [{ deletionAuth: [] }]
+            : [{ bearerAuth: [] }])
       }
     }
   })
