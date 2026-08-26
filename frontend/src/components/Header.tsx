@@ -25,10 +25,10 @@ interface HeaderProps {
 // own controls rather than replacing them.
 export function Header({ user, onLogout, onOpenMobileMenu }: HeaderProps) {
   const [loggingOut, setLoggingOut] = useState(false)
-  const { schlossUrl, glockeUrl, schlusselUrl } = getRuntimeConfig()
-  const notificationOrigin = normalizeNotificationOrigin(glockeUrl)
+  const { schlossUrl, glockeUrl, schlusselUrl, services } = getRuntimeConfig()
+  const notificationOrigin = services.glocke ? normalizeNotificationOrigin(glockeUrl) : null
   const notificationState = useUnreadNotifications({
-    glockeOrigin: glockeUrl,
+    glockeOrigin: services.glocke ? glockeUrl : '',
     userId: loggingOut ? null : user?.id ?? null,
     apiClient,
   })

@@ -8,7 +8,8 @@ jq -nr \
   --arg schlusselUrl "${SCHLUSSEL_WEB_URL:-http://localhost:4001}" \
   --arg schlossUrl "${SCHLOSS_URL:-http://localhost:3000}" \
   --arg glockeUrl "${GLOCKE_URL:-http://localhost:5177}" \
-  '"window.__HOF_CONFIG__ = " + ({schemaVersion: 1, $schlusselUrl, $schlossUrl, $glockeUrl} | tojson) + ";"' \
+  --argjson glockeEnabled "$([ -n "${GLOCKE_URL:-}" ] && echo true || echo false)" \
+  '"window.__HOF_CONFIG__ = " + ({schemaVersion: 1, $schlusselUrl, $schlossUrl, $glockeUrl, services: {glocke: $glockeEnabled}} | tojson) + ";"' \
   > "$tmp"
 chmod 644 "$tmp"
 mv "$tmp" /config/config.js

@@ -12,6 +12,7 @@ describe('getRuntimeConfig', () => {
       schlusselUrl: 'http://localhost:4001',
       schlossUrl: 'http://localhost:3000',
       glockeUrl: 'http://localhost:5177',
+      services: { glocke: true },
     })
 
     window.__HOF_CONFIG__ = { schemaVersion: 1, schlusselUrl: '  ', glockeUrl: '' }
@@ -20,6 +21,7 @@ describe('getRuntimeConfig', () => {
       schlusselUrl: 'http://localhost:4001',
       schlossUrl: 'http://localhost:3000',
       glockeUrl: 'http://localhost:5177',
+      services: { glocke: true },
     })
   })
 
@@ -35,10 +37,25 @@ describe('getRuntimeConfig', () => {
       schlusselUrl: 'https://auth.example.com',
       schlossUrl: 'http://home.example.com:8080',
       glockeUrl: 'https://glocke.example.com',
+      services: { glocke: true },
     })
 
     window.__HOF_CONFIG__ = { schemaVersion: 1, schlossUrl: 'https://new.example.com' }
     expect(getRuntimeConfig().schlossUrl).toBe('https://new.example.com')
+  })
+
+  it('reads the glocke topology flag, defaulting to enabled when missing or malformed', () => {
+    window.__HOF_CONFIG__ = { schemaVersion: 1, services: { glocke: false } }
+    expect(getRuntimeConfig().services).toEqual({ glocke: false })
+
+    window.__HOF_CONFIG__ = { schemaVersion: 1, services: { glocke: 'nope' } }
+    expect(getRuntimeConfig().services).toEqual({ glocke: true })
+
+    window.__HOF_CONFIG__ = { schemaVersion: 1, services: 'nope' }
+    expect(getRuntimeConfig().services).toEqual({ glocke: true })
+
+    window.__HOF_CONFIG__ = { schemaVersion: 1 }
+    expect(getRuntimeConfig().services).toEqual({ glocke: true })
   })
 
   it.each([

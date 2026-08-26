@@ -102,6 +102,20 @@ describe('authenticated Header Glocke bell', () => {
     expect(screen.queryByRole('link', { name: /уведомления|notifications/i })).not.toBeInTheDocument()
   })
 
+  it('does not request unread state or render the bell when Glocke is disabled in this deployment', async () => {
+    window.__HOF_CONFIG__ = { schemaVersion: 1, glockeUrl: configuredGlockeUrl, services: { glocke: false } }
+    // useAvatarUrl (schlusselUrl, unrelated to Glocke's own topology flag)
+    // still fires its own profile fetch - route by URL like the other
+    // tests here, so this only asserts the unread-count endpoint specifically.
+    const fetchMock = routedFetch(() => unreadResponse(0))
+    vi.stubGlobal('fetch', fetchMock)
+    await renderHeader()
+
+    await Promise.resolve()
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining(unreadUrl))
+    expect(screen.queryByRole('link', { name: /уведомления|notifications/i })).not.toBeInTheDocument()
+  })
+
   it('uses the existing in-memory token only as a Bearer Authorization header', async () => {
     const fetchMock = vi.fn().mockResolvedValue(unreadResponse(3))
     vi.stubGlobal('fetch', fetchMock)

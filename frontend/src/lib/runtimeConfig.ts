@@ -1,8 +1,13 @@
+export interface RuntimeServices {
+  glocke: boolean
+}
+
 export interface RuntimeConfig {
   schemaVersion: 1
   schlusselUrl: string
   schlossUrl: string
   glockeUrl: string
+  services: RuntimeServices
 }
 
 declare global {
@@ -16,9 +21,21 @@ const defaults: RuntimeConfig = {
   schlusselUrl: 'http://localhost:4001',
   schlossUrl: 'http://localhost:3000',
   glockeUrl: 'http://localhost:5177',
+  services: { glocke: true },
 }
 
-function origin(value: unknown, name: keyof Omit<RuntimeConfig, 'schemaVersion'>): string {
+// Missing or non-boolean per-service flags default to enabled (true) - a
+// deployment that hasn't started emitting `services` yet (or a hand-edited
+// config.js) should keep showing the bell, matching this app's behavior
+// before this field existed, rather than hiding it nobody asked to disable.
+function services(value: unknown): RuntimeServices {
+  const source = typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {}
+  return { glocke: typeof source.glocke === 'boolean' ? source.glocke : true }
+}
+
+function origin(value: unknown, name: keyof Omit<RuntimeConfig, 'schemaVersion' | 'services'>): string {
   if (value === undefined || (typeof value === 'string' && value.trim() === '')) return defaults[name]
   if (typeof value !== 'string') throw new Error(`Runtime config ${name} must be an HTTP(S) origin`)
 
@@ -59,5 +76,6 @@ export function getRuntimeConfig(): RuntimeConfig {
     schlusselUrl: origin(config.schlusselUrl, 'schlusselUrl'),
     schlossUrl: origin(config.schlossUrl, 'schlossUrl'),
     glockeUrl: origin(config.glockeUrl, 'glockeUrl'),
+    services: services(config.services),
   }
 }
