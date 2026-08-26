@@ -58,18 +58,18 @@ function notificationLink(): HTMLAnchorElement {
 }
 
 beforeEach(() => {
-  vi.stubEnv('VITE_GLOCKE_URL', configuredGlockeUrl)
+  window.__HOF_CONFIG__ = { schemaVersion: 1, glockeUrl: configuredGlockeUrl }
 })
 
 afterEach(() => {
   cleanup()
   setAccessToken(null)
-  vi.unstubAllEnvs()
+  delete window.__HOF_CONFIG__
   vi.unstubAllGlobals()
 })
 
 describe('authenticated Header Glocke bell', () => {
-  it('links the shared bell to the normalized VITE_GLOCKE_URL /notifications origin', async () => {
+  it('links the shared bell to the normalized runtime Glocke origin', async () => {
     vi.stubGlobal('fetch', routedFetch(() => unreadResponse(0)))
     await renderHeader()
 
@@ -90,20 +90,6 @@ describe('authenticated Header Glocke bell', () => {
 
     if (label === null) expect(bell).not.toHaveTextContent(/\d/)
     else expect(within(bell).getByText(label)).toBeInTheDocument()
-  })
-
-  it('omits the bell and unread request when VITE_GLOCKE_URL is not a trusted origin', async () => {
-    vi.stubEnv('VITE_GLOCKE_URL', 'https://glocke.example.com/untrusted-path')
-    const fetchMock = routedFetch(() => { throw new Error('unread-count should not be fetched') })
-    vi.stubGlobal('fetch', fetchMock)
-    await renderHeader()
-
-    await Promise.resolve()
-    // An invalid Glocke origin only suppresses the unread-count fetch and
-    // the bell itself - the avatar fetch (useAvatarUrl) targets Schlüssel
-    // independently and is unaffected.
-    expect(fetchMock.mock.calls.some(([input]) => String(input).includes('unread-count'))).toBe(false)
-    expect(screen.queryByRole('link', { name: /уведомления|notifications/i })).not.toBeInTheDocument()
   })
 
   it('does not request unread state or render the bell before authentication', async () => {

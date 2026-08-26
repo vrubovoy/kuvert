@@ -5,8 +5,9 @@ import { createCorsMiddleware } from '@zudar107/schloss-server-kit'
 import { bodyLimit } from 'hono/body-limit'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
-import { db } from './db/index.js'
+import { sqlite } from './db/index.js'
+import { prepareDatabase } from './db/migrate.js'
+import { notificationCredentials } from './config.js'
 import { accountsRouter } from './features/accounts/router.js'
 import { periodsRouter } from './features/periods/router.js'
 import { envelopesRouter } from './features/envelopes/router.js'
@@ -26,7 +27,8 @@ import { deletionsRouter } from './features/deletions/router.js'
 // path that only matches one of the two.
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
-migrate(db, { migrationsFolder: join(__dirname, 'db/migrations') })
+prepareDatabase(sqlite, join(__dirname, 'db/migrations'))
+const glockeCredentials = notificationCredentials()
 
 const ALLOWED_ORIGINS = (process.env['ALLOWED_ORIGINS'] ?? 'http://localhost:5174')
   .split(',').map((o) => o.trim())
@@ -67,7 +69,7 @@ const server = serve({ fetch: app.fetch, port: PORT }, () => {
   console.log(`[Kuvert API] Running on http://localhost:${PORT}`)
 })
 
-const notificationOutboxRuntime = startNotificationOutbox()
+const notificationOutboxRuntime = startNotificationOutbox(glockeCredentials)
 
 let shutdownPromise: Promise<void> | undefined
 export function shutdown(): Promise<void> {

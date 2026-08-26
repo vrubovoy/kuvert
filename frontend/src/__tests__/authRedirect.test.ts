@@ -1,9 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { buildSchluesselLoginUrl, buildSchluesselLogoutUrl, buildSchluesselAccountUrl, CODE_VERIFIER_STORAGE_KEY } from '../lib/authRedirect'
 
 beforeEach(() => {
   sessionStorage.clear()
+  delete window.__HOF_CONFIG__
 })
+
+function setSchlusselUrl(schlusselUrl: string) {
+  window.__HOF_CONFIG__ = { schemaVersion: 1, schlusselUrl }
+}
 
 // Mirrors the stubLocation() convention used in Layout.test.tsx / Header.test.tsx:
 // jsdom allows reassigning window.location for test purposes. We additionally pin
@@ -77,24 +82,19 @@ describe('buildSchluesselLoginUrl', () => {
 })
 
 describe('buildSchluesselLogoutUrl', () => {
-  afterEach(() => {
-    vi.unstubAllEnvs()
-  })
-
   it('points at the schlussel logout page', () => {
-    vi.stubEnv('VITE_SCHLUSSEL_URL', 'https://schlussel.example.com')
+    setSchlusselUrl('https://schlussel.example.com')
     const url = buildSchluesselLogoutUrl('https://kuvert.test/budget')
     expect(url.startsWith('https://schlussel.example.com/logout?')).toBe(true)
   })
 
-  it('falls back to http://localhost:4001 when VITE_SCHLUSSEL_URL is unset', () => {
-    vi.stubEnv('VITE_SCHLUSSEL_URL', undefined)
+  it('falls back to http://localhost:4001 when runtime config is absent', () => {
     const url = buildSchluesselLogoutUrl('https://kuvert.test/budget')
     expect(url.startsWith('http://localhost:4001/logout?')).toBe(true)
   })
 
   it('encodes an explicit returnTo argument into the return_to query param', () => {
-    vi.stubEnv('VITE_SCHLUSSEL_URL', 'http://localhost:4001')
+    setSchlusselUrl('http://localhost:4001')
     const url = buildSchluesselLogoutUrl('https://kuvert.test/budget')
 
     expect(url).toContain(`return_to=${encodeURIComponent('https://kuvert.test/budget')}`)
@@ -104,7 +104,7 @@ describe('buildSchluesselLogoutUrl', () => {
   })
 
   it('defaults returnTo to the current page origin plus a trailing slash when omitted', () => {
-    vi.stubEnv('VITE_SCHLUSSEL_URL', 'http://localhost:4001')
+    setSchlusselUrl('http://localhost:4001')
     const restore = stubLocation('https://kuvert.example.com')
 
     const url = buildSchluesselLogoutUrl()
@@ -115,7 +115,7 @@ describe('buildSchluesselLogoutUrl', () => {
   })
 
   it('does not touch sessionStorage or generate a PKCE code_verifier', () => {
-    vi.stubEnv('VITE_SCHLUSSEL_URL', 'http://localhost:4001')
+    setSchlusselUrl('http://localhost:4001')
     expect(sessionStorage.getItem(CODE_VERIFIER_STORAGE_KEY)).toBeNull()
 
     buildSchluesselLogoutUrl('https://kuvert.test/budget')
@@ -125,7 +125,7 @@ describe('buildSchluesselLogoutUrl', () => {
   })
 
   it('is synchronous and returns a plain string, not a Promise', () => {
-    vi.stubEnv('VITE_SCHLUSSEL_URL', 'http://localhost:4001')
+    setSchlusselUrl('http://localhost:4001')
     const result = buildSchluesselLogoutUrl('https://kuvert.test/budget')
 
     expect(result).not.toBeInstanceOf(Promise)
@@ -134,24 +134,19 @@ describe('buildSchluesselLogoutUrl', () => {
 })
 
 describe('buildSchluesselAccountUrl', () => {
-  afterEach(() => {
-    vi.unstubAllEnvs()
-  })
-
   it('points at the schlussel account page', () => {
-    vi.stubEnv('VITE_SCHLUSSEL_URL', 'https://schlussel.example.com')
+    setSchlusselUrl('https://schlussel.example.com')
     const url = buildSchluesselAccountUrl('/budget', 'http://localhost:5174')
     expect(url.startsWith('https://schlussel.example.com/account?')).toBe(true)
   })
 
-  it('falls back to http://localhost:4001 when VITE_SCHLUSSEL_URL is unset', () => {
-    vi.stubEnv('VITE_SCHLUSSEL_URL', undefined)
+  it('falls back to http://localhost:4001 when runtime config is absent', () => {
     const url = buildSchluesselAccountUrl('/budget', 'http://localhost:5174')
     expect(url.startsWith('http://localhost:4001/account?')).toBe(true)
   })
 
   it('encodes return_to as the given origin plus the given path', () => {
-    vi.stubEnv('VITE_SCHLUSSEL_URL', 'http://localhost:4001')
+    setSchlusselUrl('http://localhost:4001')
     const url = buildSchluesselAccountUrl('/transactions?foo=bar', 'https://kuvert.example.com')
 
     const params = new URLSearchParams(url.split('?')[1])
@@ -159,7 +154,7 @@ describe('buildSchluesselAccountUrl', () => {
   })
 
   it('defaults origin to window.location.origin when omitted', () => {
-    vi.stubEnv('VITE_SCHLUSSEL_URL', 'http://localhost:4001')
+    setSchlusselUrl('http://localhost:4001')
     const restore = stubLocation('https://kuvert.example.com')
 
     const url = buildSchluesselAccountUrl('/goals')
@@ -170,7 +165,7 @@ describe('buildSchluesselAccountUrl', () => {
   })
 
   it('does not touch sessionStorage or generate a PKCE code_verifier', () => {
-    vi.stubEnv('VITE_SCHLUSSEL_URL', 'http://localhost:4001')
+    setSchlusselUrl('http://localhost:4001')
     expect(sessionStorage.getItem(CODE_VERIFIER_STORAGE_KEY)).toBeNull()
 
     buildSchluesselAccountUrl('/budget', 'http://localhost:5174')
@@ -180,7 +175,7 @@ describe('buildSchluesselAccountUrl', () => {
   })
 
   it('is synchronous and returns a plain string, not a Promise', () => {
-    vi.stubEnv('VITE_SCHLUSSEL_URL', 'http://localhost:4001')
+    setSchlusselUrl('http://localhost:4001')
     const result = buildSchluesselAccountUrl('/budget', 'http://localhost:5174')
 
     expect(result).not.toBeInstanceOf(Promise)

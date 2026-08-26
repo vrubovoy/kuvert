@@ -9,7 +9,8 @@ vi.mock('@hono/node-server', () => ({
   serve: vi.fn(() => ({ close: lifecycle.close })),
 }))
 vi.mock('drizzle-orm/better-sqlite3/migrator', () => ({ migrate: vi.fn() }))
-vi.mock('../db/index.js', () => ({ db: {} }))
+vi.mock('../db/index.js', () => ({ db: {}, sqlite: {} }))
+vi.mock('../db/migrate.js', () => ({ prepareDatabase: vi.fn() }))
 vi.mock('../notifications/outbox.js', () => ({
   startNotificationOutbox: vi.fn(() => ({ stop: lifecycle.stop })),
 }))

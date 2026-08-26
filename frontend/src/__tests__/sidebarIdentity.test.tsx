@@ -84,7 +84,7 @@ describe('Footer', () => {
 // Header avatar tested in Header.test.tsx — see buildSchluesselAccountUrl in
 // lib/authRedirect.ts). Convention for stubbing window.location.href follows
 // the stubLocation() helper in Header.test.tsx / authRedirect.test.ts. No
-// VITE_SCHLUSSEL_URL is stubbed here, so the code under test falls back to
+// No runtime Schlüssel URL is stubbed here, so the code under test falls back to
 // its documented default of http://localhost:4001.
 // ---------------------------------------------------------------------------
 describe('sidebar identity block click (schlussel account link)', () => {
