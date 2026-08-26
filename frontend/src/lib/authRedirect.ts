@@ -1,16 +1,13 @@
 // Thin, kuvert-named wrapper around @zudar107/schloss-ui's config-driven
 // auth-redirect helpers - preserves kuvert's own function names so nothing
-// else in the app needs to change. Reads import.meta.env.VITE_SCHLUSSEL_URL
-// fresh on every call (not memoized at module load) so it keeps honoring a
-// value changed after the module was first imported (e.g. via test env
-// stubbing).
+// else in the app needs to change. Reads runtime config on every call so tests
+// and startup validation do not depend on module import order.
 import { buildLoginUrl, buildLogoutUrl, buildAccountUrl, CODE_VERIFIER_STORAGE_KEY } from '@zudar107/schloss-ui'
-
-const DEFAULT_SCHLUSSEL_URL = 'http://localhost:4001'
+import { getRuntimeConfig } from './runtimeConfig'
 
 function config() {
   return {
-    schluesselUrl: (import.meta.env.VITE_SCHLUSSEL_URL as string | undefined) ?? DEFAULT_SCHLUSSEL_URL,
+    schluesselUrl: getRuntimeConfig().schlusselUrl,
   }
 }
 

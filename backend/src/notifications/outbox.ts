@@ -58,9 +58,9 @@ function startTerminalOutboxCleanup(retentionMs: number) {
 // environment without Glocke set up doesn't crash on boot - events still
 // get recorded (see features/goals/router.ts), they just queue up
 // undelivered until credentials are added.
-export function startNotificationOutbox() {
-  const keyId = process.env['KUVERT_TO_GLOCKE_HMAC_KEY_ID']
-  const secret = process.env['KUVERT_TO_GLOCKE_HMAC_SECRET']
+export function startNotificationOutbox(credentials?: { keyId?: string; secret?: string }) {
+  const keyId = credentials?.keyId ?? process.env['KUVERT_TO_GLOCKE_HMAC_KEY_ID']
+  const secret = credentials?.secret ?? process.env['KUVERT_TO_GLOCKE_HMAC_SECRET']
   const retentionMs = Number(process.env['GLOCKE_OUTBOX_RETENTION_MS'] ?? DEFAULT_OUTBOX_RETENTION_MS)
   if (!Number.isSafeInteger(retentionMs) || retentionMs <= 0 || retentionMs > MAX_OUTBOX_RETENTION_MS) {
     throw new Error(`GLOCKE_OUTBOX_RETENTION_MS must be an integer between 1 and ${MAX_OUTBOX_RETENTION_MS}`)

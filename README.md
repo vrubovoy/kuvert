@@ -153,9 +153,9 @@ See `.env.example`. The important ones:
 | `JWT_ISSUER` | Must match Schlüssel's own issuer, or every token gets rejected |
 | `ALLOWED_ORIGINS` | Comma-separated CORS allowlist when running the backend directly |
 | `KUVERT_ALLOWED_ORIGINS` | Kuvert-specific CORS allowlist used by Docker Compose |
-| `SCHLUSSEL_WEB_URL` / `VITE_SCHLUSSEL_URL` | Schlüssel hosted frontend URL for Compose / direct Vite use (not its internal API URL) |
-| `SCHLOSS_URL` / `VITE_SCHLOSS_URL` | Platform home URL for Compose / direct Vite use |
-| `GLOCKE_URL` / `VITE_GLOCKE_URL` | Browser-facing Glocke origin for Compose / direct Vite use; used by the header bell and unread-count request |
+| `SCHLUSSEL_WEB_URL` | Schlüssel hosted frontend origin passed to the frontend container at runtime (not its internal API URL) |
+| `SCHLOSS_URL` | Platform home origin passed to the frontend container at runtime |
+| `GLOCKE_URL` | Browser-facing Glocke origin passed at runtime; used by the header bell and unread-count request |
 | `GLOCKE_BASE_URL` | Glocke's internal API URL, for delivering notification events |
 | `KUVERT_TO_GLOCKE_HMAC_KEY_ID` | Key ID Kuvert signs outgoing Glocke requests with |
 | `KUVERT_TO_GLOCKE_HMAC_SECRET` | Matching HMAC secret; must equal Glocke's `GLOCKE_SOURCE_SECRET_KUVERT`. Omit both HMAC variables to queue events without delivery; partial credentials fail startup |
@@ -164,6 +164,13 @@ See `.env.example`. The important ones:
 The default Compose CORS allowlist includes Schlüssel's hosted browser origin. It is
 distinct from the internal `schlussel:4000` container URL. Platform ZIP collection calls
 Kuvert server-to-server and does not depend on browser CORS.
+
+The frontend loads `/config.js` synchronously before its bundle. Docker generates that
+file from the three runtime variables above on every container start, so the same image
+can be deployed at different origins. Direct Vite development uses the localhost values
+in `frontend/public/config.js`. Configured values must be bare `http://` or `https://`
+origins without credentials, path, query, or fragment; malformed explicit values stop
+frontend startup rather than silently falling back.
 
 ## Running with Docker
 

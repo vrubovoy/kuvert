@@ -60,20 +60,19 @@ function stubLocation() {
 
 afterEach(() => {
   cleanup()
-  vi.unstubAllEnvs()
+  delete window.__HOF_CONFIG__
 })
 
 describe('Header home link', () => {
-  it('points "На главную" at VITE_SCHLOSS_URL when the env var is set', async () => {
-    vi.stubEnv('VITE_SCHLOSS_URL', 'https://schloss.example.com')
+  it('points "На главную" at the configured Schloss URL', async () => {
+    window.__HOF_CONFIG__ = { schemaVersion: 1, schlossUrl: 'https://schloss.example.com' }
     const { header } = await renderLayout(mockUser)
 
     const link = within(header).getByRole('link', { name: /главную/i }) as HTMLAnchorElement
     expect(link.getAttribute('href')).toBe('https://schloss.example.com')
   })
 
-  it('falls back to http://localhost:3000 when VITE_SCHLOSS_URL is unset', async () => {
-    vi.stubEnv('VITE_SCHLOSS_URL', undefined)
+  it('falls back to http://localhost:3000 when runtime config is absent', async () => {
     const { header } = await renderLayout(mockUser)
 
     const link = within(header).getByRole('link', { name: /главную/i }) as HTMLAnchorElement
