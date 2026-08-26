@@ -155,7 +155,7 @@ See `.env.example`. The important ones:
 | `KUVERT_ALLOWED_ORIGINS` | Kuvert-specific CORS allowlist used by Docker Compose |
 | `SCHLUSSEL_WEB_URL` | Schlüssel hosted frontend origin passed to the frontend container at runtime (not its internal API URL) |
 | `SCHLOSS_URL` | Platform home origin passed to the frontend container at runtime |
-| `GLOCKE_URL` | Browser-facing Glocke origin passed at runtime; used by the header bell and unread-count request |
+| `GLOCKE_URL` | Browser-facing Glocke origin passed at runtime; used by the header bell and unread-count request. Leaving it unset also hides the bell entirely (Glocke is an optional platform service) |
 | `GLOCKE_BASE_URL` | Glocke's internal API URL, for delivering notification events |
 | `KUVERT_TO_GLOCKE_HMAC_KEY_ID` | Key ID Kuvert signs outgoing Glocke requests with |
 | `KUVERT_TO_GLOCKE_HMAC_SECRET` | Matching HMAC secret; must equal Glocke's `GLOCKE_SOURCE_SECRET_KUVERT`. Omit both HMAC variables to queue events without delivery; partial credentials fail startup |
@@ -170,7 +170,11 @@ file from the three runtime variables above on every container start, so the sam
 can be deployed at different origins. Direct Vite development uses the localhost values
 in `frontend/public/config.js`. Configured values must be bare `http://` or `https://`
 origins without credentials, path, query, or fragment; malformed explicit values stop
-frontend startup rather than silently falling back.
+frontend startup rather than silently falling back. The generated config also carries a
+`services.glocke` flag, derived from whether `GLOCKE_URL` was actually set (not from its
+dev-fallback default) - this is what actually hides the header bell in a deployment
+without Glocke, since `GLOCKE_URL` alone can't tell "Glocke is disabled" apart from
+"using the default."
 
 ## Running with Docker
 
