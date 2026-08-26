@@ -6,7 +6,8 @@ import { bodyLimit } from 'hono/body-limit'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { sqlite } from './db/index.js'
-import { prepareDatabase } from './db/migrate.js'
+import { assertDatabaseCurrent, prepareDatabase } from './db/migrate.js'
+import { buildInfo } from './build-info.js'
 import { notificationCredentials } from './config.js'
 import { accountsRouter } from './features/accounts/router.js'
 import { periodsRouter } from './features/periods/router.js'
@@ -46,7 +47,15 @@ app.use('*', bodyLimit({
 app.use('*', logger())
 app.use('*', createCorsMiddleware({ allowedOrigins: ALLOWED_ORIGINS }))
 
-app.get('/health', (c) => c.json({ status: 'ok', service: 'Kuvert' }))
+app.get('/health', (c) => c.json({ status: 'ok', service: 'Kuvert', ...buildInfo }))
+app.get('/ready', (c) => {
+  try {
+    assertDatabaseCurrent(sqlite, join(__dirname, 'db/migrations'))
+    return c.json({ status: 'ready', service: 'Kuvert' })
+  } catch {
+    return c.json({ status: 'unavailable', service: 'Kuvert' }, 503)
+  }
+})
 
 // Reached from kuvert/frontend's own /docs page as /backend/openapi.json
 // (the frontend container's Caddyfile already proxies /backend/* here

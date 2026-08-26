@@ -188,6 +188,12 @@ Neither service publishes a host port — both are reached through the
 - tor's Caddy auto-upgrades everything to HTTPS with its own locally-trusted CA), on the
 same `schloss-net` network as `schlussel` and `schloss`.
 
+## Operations
+
+Run `pnpm build && pnpm db:migrate` as a dedicated deployment step. Normal startup never changes the database: unset, empty, or `false` `MIGRATE_ON_STARTUP` asserts that all migrations are applied; only explicit `true` migrates on startup. `pnpm db:migrate:dev` retains the Drizzle Kit workflow for development only.
+
+`GET /health` is liveness and reports `version`/`build`; `GET /ready` verifies the current database schema. Set bounded `SERVICE_VERSION` and `BUILD_SHA` metadata (Compose: `KUVERT_SERVICE_VERSION` and `KUVERT_BUILD_SHA`), or the package version and `unknown` are used.
+
 ## License
 
 AGPL-3.0 — see [LICENSE](LICENSE).
