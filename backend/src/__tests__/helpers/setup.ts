@@ -1,5 +1,9 @@
 import { Hono } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
+import { checkJwksReachable } from '@zudar107/schloss-server-kit'
+import { sqlite, migrationsDir } from './db.js'
+import { assertDatabaseCurrent } from '../../db/migrate.js'
+import { JWKS_URL } from '../../middleware/auth.js'
 import { accountsRouter } from '../../features/accounts/router.js'
 import { periodsRouter } from '../../features/periods/router.js'
 import { envelopesRouter } from '../../features/envelopes/router.js'
@@ -24,6 +28,19 @@ export function createTestApp() {
     onError: (c) => c.json({ error: 'Request body too large' }, 413),
   }))
   app.get('/health', (c) => c.json({ status: 'ok', service: 'Kuvert' }))
+  // Mirrors index.ts's own real /ready logic (schema currency, then the
+  // Schlüssel JWKS dependency), not a static "ready" stub.
+  app.get('/ready', async (c) => {
+    try {
+      assertDatabaseCurrent(sqlite, migrationsDir)
+    } catch {
+      return c.json({ status: 'unavailable', service: 'Kuvert' }, 503)
+    }
+    if (!(await checkJwksReachable(JWKS_URL))) {
+      return c.json({ status: 'unavailable', service: 'Kuvert' }, 503)
+    }
+    return c.json({ status: 'ready', service: 'Kuvert' })
+  })
   app.route('/accounts', accountsRouter)
   app.route('/periods', periodsRouter)
   app.route('/envelopes', envelopesRouter)

@@ -1,7 +1,7 @@
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { logger } from 'hono/logger'
-import { createCorsMiddleware } from '@zudar107/schloss-server-kit'
+import { checkJwksReachable, createCorsMiddleware } from '@zudar107/schloss-server-kit'
 import { bodyLimit } from 'hono/body-limit'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
@@ -17,7 +17,7 @@ import { goalsRouter } from './features/goals/router.js'
 import { debtsRouter } from './features/debts/router.js'
 import { usersRouter } from './features/users/router.js'
 import { exportRouter, exportsRouter } from './features/export/router.js'
-import { requireAuth, requireAdmin } from './middleware/auth.js'
+import { JWKS_URL, requireAuth, requireAdmin } from './middleware/auth.js'
 import { openApiDocument } from './openapi.js'
 import { startNotificationOutbox } from './notifications/outbox.js'
 import { deletionsRouter } from './features/deletions/router.js'
@@ -48,13 +48,16 @@ app.use('*', logger())
 app.use('*', createCorsMiddleware({ allowedOrigins: ALLOWED_ORIGINS }))
 
 app.get('/health', (c) => c.json({ status: 'ok', service: 'Kuvert', ...buildInfo }))
-app.get('/ready', (c) => {
+app.get('/ready', async (c) => {
   try {
     assertDatabaseCurrent(sqlite, join(__dirname, 'db/migrations'))
-    return c.json({ status: 'ready', service: 'Kuvert' })
   } catch {
     return c.json({ status: 'unavailable', service: 'Kuvert' }, 503)
   }
+  if (!(await checkJwksReachable(JWKS_URL))) {
+    return c.json({ status: 'unavailable', service: 'Kuvert' }, 503)
+  }
+  return c.json({ status: 'ready', service: 'Kuvert' })
 })
 
 // Reached from kuvert/frontend's own /docs page as /backend/openapi.json

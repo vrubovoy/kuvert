@@ -1,6 +1,11 @@
 import { createMiddleware } from 'hono/factory'
 import type { ExportPrincipal } from '@zudar107/schloss-server-kit'
 
+// Mirrors the real middleware/auth.ts export - readiness tests set
+// SCHLUSSEL_JWKS_URL before importing anything so this points at a real
+// (or deliberately failing) test server instead of the production default.
+export const JWKS_URL = process.env['SCHLUSSEL_JWKS_URL'] ?? 'http://localhost:4000/.well-known/jwks.json'
+
 const USERS = {
   'test-token': {
     id: 'user-1',
